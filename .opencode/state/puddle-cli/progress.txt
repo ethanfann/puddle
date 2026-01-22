@@ -65,3 +65,12 @@ Started: 2026-01-21
 - Validates ID is numeric, returns exit code 3 for invalid
 - Returns deleted bookmark info on success
 - **Files:** scripts/puddle
+
+## Task - bulk-1
+- Implemented `puddle tag add|rm <tag> --search '...'` for bulk tagging
+- Uses PUT /raindrops/{collectionId}?search=... endpoint
+- Supports --collection to limit operation scope
+- Tag add uses `{tags: [tag]}`, rm uses `{$unset: {tags: [tag]}}`
+- Returns `{modified: N, result: bool}`
+- --search is required
+- **Files:** scripts/puddle

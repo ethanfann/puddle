@@ -101,7 +101,7 @@
         "Returns JSON with count of modified bookmarks",
         "Missing --search flag returns error"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "bulk-2",

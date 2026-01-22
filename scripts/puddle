@@ -477,6 +477,89 @@ cmd_rm() {
   fi
 }
 
+# Command: tag add|rm <tag> --search '...'
+cmd_tag() {
+  if [[ $# -lt 2 ]]; then
+    echo '{"error": "missing_argument", "message": "Usage: puddle tag add|rm <tag> --search '\''...'\'' [--collection N]"}' >&2
+    return 1
+  fi
+  
+  local action="$1"
+  shift
+  
+  if [[ "$action" != "add" && "$action" != "rm" ]]; then
+    echo '{"error": "invalid_action", "message": "Tag action must be '\''add'\'' or '\''rm'\''"}' >&2
+    return 1
+  fi
+  
+  local tag=""
+  local search=""
+  local collection="0"
+  
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --search)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--search requires a value"}' >&2
+          return 1
+        fi
+        search="$1"
+        shift
+        ;;
+      --collection)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          return 1
+        fi
+        collection="$1"
+        shift
+        ;;
+      *)
+        if [[ -z "$tag" ]]; then
+          tag="$1"
+        fi
+        shift
+        ;;
+    esac
+  done
+  
+  # Validate required args
+  if [[ -z "$tag" ]]; then
+    echo '{"error": "missing_tag", "message": "Tag name is required"}' >&2
+    return 1
+  fi
+  
+  if [[ -z "$search" ]]; then
+    echo '{"error": "missing_search", "message": "--search is required for bulk tag operations"}' >&2
+    return 1
+  fi
+  
+  # Build payload based on action
+  local payload
+  if [[ "$action" == "add" ]]; then
+    payload=$(jq -n --arg tag "$tag" '{tags: [$tag]}')
+  else
+    # rm action - use empty array with tag to remove
+    payload=$(jq -n --arg tag "$tag" '{"$unset": {tags: [$tag]}}')
+  fi
+  
+  # URL encode search
+  local encoded_search
+  encoded_search=$(printf '%s' "$search" | jq -sRr @uri)
+  
+  local endpoint="/raindrops/$collection?search=$encoded_search"
+  
+  local response
+  if response=$(api_request PUT "$endpoint" "$payload"); then
+    echo "$response" | jq '{modified: .modified, result: .result}'
+  else
+    return $?
+  fi
+}
+
 # Command dispatch
 cmd="${1:-}"
 shift || true
@@ -497,7 +580,10 @@ case "$cmd" in
   rm)
     cmd_rm "$@"
     ;;
-  tag|move|collections)
+  tag)
+    cmd_tag "$@"
+    ;;
+  move|collections)
     echo "{\"error\": \"not_implemented\", \"message\": \"Command '$cmd' not yet implemented\"}" >&2
     exit 1
     ;;
