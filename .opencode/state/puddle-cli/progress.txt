@@ -58,3 +58,10 @@ Started: 2026-01-21
 - --important validates true/false values
 - Uses PUT /raindrop/{id} endpoint
 - **Files:** scripts/puddle
+
+## Task - write-3
+- Implemented `puddle rm <id>` to delete bookmarks
+- Uses DELETE /raindrop/{id} endpoint
+- Validates ID is numeric, returns exit code 3 for invalid
+- Returns deleted bookmark info on success
+- **Files:** scripts/puddle

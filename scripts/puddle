@@ -454,6 +454,29 @@ cmd_update() {
   fi
 }
 
+# Command: rm <id>
+cmd_rm() {
+  if [[ $# -eq 0 ]]; then
+    echo '{"error": "missing_argument", "message": "Usage: puddle rm <id>"}' >&2
+    return 1
+  fi
+  
+  local id="$1"
+  
+  # Validate id is numeric
+  if ! [[ "$id" =~ ^[0-9]+$ ]]; then
+    echo '{"error": "invalid_id", "message": "Bookmark ID must be numeric"}' >&2
+    return 3
+  fi
+  
+  local response
+  if response=$(api_request DELETE "/raindrop/$id"); then
+    echo "$response" | jq '.item'
+  else
+    return $?
+  fi
+}
+
 # Command dispatch
 cmd="${1:-}"
 shift || true
@@ -471,7 +494,10 @@ case "$cmd" in
   update)
     cmd_update "$@"
     ;;
-  rm|tag|move|collections)
+  rm)
+    cmd_rm "$@"
+    ;;
+  tag|move|collections)
     echo "{\"error\": \"not_implemented\", \"message\": \"Command '$cmd' not yet implemented\"}" >&2
     exit 1
     ;;

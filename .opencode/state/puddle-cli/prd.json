@@ -88,7 +88,7 @@
         "Deleting from Trash (collection -99) permanently removes",
         "Invalid ID returns error with code 3"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "bulk-1",
@@ -150,6 +150,19 @@
         "Global --json flag forces JSON errors for scripting",
         "Update all commands to use plain text errors",
         "Exit codes remain unchanged"
+      ],
+      "passes": false
+    },
+    {
+      "id": "polish-2",
+      "category": "polish",
+      "description": "Extract repetitive flag parsing and payload building into helpers",
+      "steps": [
+        "Create require_flag_value() helper for --flag value validation",
+        "Create parse_tags() helper to convert comma-separated to JSON array",
+        "Create add_json_field() helper for incremental payload building",
+        "Refactor cmd_add and cmd_update to use helpers",
+        "No behavior changes - pure refactor"
       ],
       "passes": false
     },
