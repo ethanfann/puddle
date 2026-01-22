@@ -83,3 +83,11 @@ Started: 2026-01-21
 - Validates collection ID is numeric (allows negative for system collections)
 - Returns `{modified: N, result: bool}`
 - **Files:** scripts/puddle
+
+## Task - read-1
+- Implemented `puddle collections` to list all collections
+- Fetches both root (/collections) and nested (/collections/childrens) collections
+- Merges results and filters out system collections (_id <= 0)
+- Returns combined array with _id, title, count, parent fields
+- **Files:** scripts/puddle
+- **Learnings:** Use `cmd=$(subshell) || ret=$?` pattern to capture both output and return code

@@ -125,7 +125,7 @@
         "Nested collections show parent.$id reference",
         "System collections (-1 Unsorted, -99 Trash) are not included"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "core-4",

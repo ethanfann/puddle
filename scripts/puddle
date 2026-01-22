@@ -636,6 +636,32 @@ cmd_move() {
   fi
 }
 
+# Command: collections
+cmd_collections() {
+  # Fetch root collections
+  local root_response ret
+  root_response=$(api_request GET "/collections") || ret=$?
+  if [[ -n "${ret:-}" ]]; then
+    return "$ret"
+  fi
+  
+  # Fetch child collections
+  local child_response
+  child_response=$(api_request GET "/collections/childrens") || ret=$?
+  if [[ -n "${ret:-}" ]]; then
+    return "$ret"
+  fi
+  
+  # Merge and filter out system collections (-1 Unsorted, -99 Trash)
+  # Extract items from both responses, merge, and filter
+  local root_items child_items
+  root_items=$(echo "$root_response" | jq '.items // []')
+  child_items=$(echo "$child_response" | jq '.items // []')
+  
+  # Combine arrays and filter out system collections
+  echo "$root_items" "$child_items" | jq -s 'add | map(select(._id > 0))'
+}
+
 # Command dispatch
 cmd="${1:-}"
 shift || true
@@ -663,8 +689,7 @@ case "$cmd" in
     cmd_move "$@"
     ;;
   collections)
-    echo "{\"error\": \"not_implemented\", \"message\": \"Command '$cmd' not yet implemented\"}" >&2
-    exit 1
+    cmd_collections "$@"
     ;;
   *)
     echo "{\"error\": \"unknown_command\", \"message\": \"Unknown command: $cmd\"}" >&2
