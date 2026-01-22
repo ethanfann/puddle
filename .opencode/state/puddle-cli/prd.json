@@ -113,7 +113,7 @@
         "Returns JSON with count of moved bookmarks",
         "Invalid collection ID returns error"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "read-1",

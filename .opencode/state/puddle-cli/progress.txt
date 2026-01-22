@@ -74,3 +74,12 @@ Started: 2026-01-21
 - Returns `{modified: N, result: bool}`
 - --search is required
 - **Files:** scripts/puddle
+
+## Task - bulk-2
+- Implemented `puddle move <collection-id> --search '...'` for bulk moves
+- Uses PUT /raindrops/{sourceCollectionId}?search=... endpoint
+- Payload: `{collection: {$id: N}}`
+- Supports --collection to specify source collection
+- Validates collection ID is numeric (allows negative for system collections)
+- Returns `{modified: N, result: bool}`
+- **Files:** scripts/puddle

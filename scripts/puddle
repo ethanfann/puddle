@@ -560,6 +560,82 @@ cmd_tag() {
   fi
 }
 
+# Command: move <collection-id> --search '...'
+cmd_move() {
+  if [[ $# -eq 0 ]]; then
+    echo '{"error": "missing_argument", "message": "Usage: puddle move <target-collection-id> --search '\''...'\'' [--collection N]"}' >&2
+    return 1
+  fi
+  
+  local target_collection=""
+  local search=""
+  local source_collection="0"
+  
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --search)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--search requires a value"}' >&2
+          return 1
+        fi
+        search="$1"
+        shift
+        ;;
+      --collection)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          return 1
+        fi
+        source_collection="$1"
+        shift
+        ;;
+      *)
+        if [[ -z "$target_collection" ]]; then
+          target_collection="$1"
+        fi
+        shift
+        ;;
+    esac
+  done
+  
+  # Validate required args
+  if [[ -z "$target_collection" ]]; then
+    echo '{"error": "missing_collection", "message": "Target collection ID is required"}' >&2
+    return 1
+  fi
+  
+  # Validate target collection is numeric (can be negative for system collections)
+  if ! [[ "$target_collection" =~ ^-?[0-9]+$ ]]; then
+    echo '{"error": "invalid_collection", "message": "Collection ID must be numeric"}' >&2
+    return 1
+  fi
+  
+  if [[ -z "$search" ]]; then
+    echo '{"error": "missing_search", "message": "--search is required for bulk move operations"}' >&2
+    return 1
+  fi
+  
+  # Build payload
+  local payload
+  payload=$(jq -n --argjson coll "$target_collection" '{collection: {"$id": $coll}}')
+  
+  # URL encode search
+  local encoded_search
+  encoded_search=$(printf '%s' "$search" | jq -sRr @uri)
+  
+  local endpoint="/raindrops/$source_collection?search=$encoded_search"
+  
+  local response
+  if response=$(api_request PUT "$endpoint" "$payload"); then
+    echo "$response" | jq '{modified: .modified, result: .result}'
+  else
+    return $?
+  fi
+}
+
 # Command dispatch
 cmd="${1:-}"
 shift || true
@@ -583,7 +659,10 @@ case "$cmd" in
   tag)
     cmd_tag "$@"
     ;;
-  move|collections)
+  move)
+    cmd_move "$@"
+    ;;
+  collections)
     echo "{\"error\": \"not_implemented\", \"message\": \"Command '$cmd' not yet implemented\"}" >&2
     exit 1
     ;;
