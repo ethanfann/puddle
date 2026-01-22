@@ -318,6 +318,142 @@ cmd_add() {
   fi
 }
 
+# Command: update <id>
+cmd_update() {
+  if [[ $# -eq 0 ]]; then
+    echo '{"error": "missing_argument", "message": "Usage: puddle update <id> [--title ...] [--note ...] [--tags ...] [--excerpt ...] [--collection ...] [--important true|false]"}' >&2
+    return 1
+  fi
+  
+  local id=""
+  local title=""
+  local note=""
+  local tags=""
+  local excerpt=""
+  local collection=""
+  local important=""
+  
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --title)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--title requires a value"}' >&2
+          return 1
+        fi
+        title="$1"
+        shift
+        ;;
+      --note)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--note requires a value"}' >&2
+          return 1
+        fi
+        note="$1"
+        shift
+        ;;
+      --tags)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--tags requires a value"}' >&2
+          return 1
+        fi
+        tags="$1"
+        shift
+        ;;
+      --excerpt)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--excerpt requires a value"}' >&2
+          return 1
+        fi
+        excerpt="$1"
+        shift
+        ;;
+      --collection)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          return 1
+        fi
+        collection="$1"
+        shift
+        ;;
+      --important)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--important requires true or false"}' >&2
+          return 1
+        fi
+        important="$1"
+        shift
+        ;;
+      *)
+        if [[ -z "$id" ]]; then
+          id="$1"
+        fi
+        shift
+        ;;
+    esac
+  done
+  
+  # Validate id
+  if [[ -z "$id" ]]; then
+    echo '{"error": "missing_id", "message": "Bookmark ID is required"}' >&2
+    return 1
+  fi
+  
+  if ! [[ "$id" =~ ^[0-9]+$ ]]; then
+    echo '{"error": "invalid_id", "message": "Bookmark ID must be numeric"}' >&2
+    return 3
+  fi
+  
+  # Build JSON payload
+  local payload='{}'
+  
+  if [[ -n "$title" ]]; then
+    payload=$(echo "$payload" | jq --arg title "$title" '. + {title: $title}')
+  fi
+  
+  if [[ -n "$note" ]]; then
+    payload=$(echo "$payload" | jq --arg note "$note" '. + {note: $note}')
+  fi
+  
+  if [[ -n "$tags" ]]; then
+    local tags_array
+    tags_array=$(echo "$tags" | tr ',' '\n' | jq -R . | jq -s .)
+    payload=$(echo "$payload" | jq --argjson tags "$tags_array" '. + {tags: $tags}')
+  fi
+  
+  if [[ -n "$excerpt" ]]; then
+    payload=$(echo "$payload" | jq --arg excerpt "$excerpt" '. + {excerpt: $excerpt}')
+  fi
+  
+  if [[ -n "$collection" ]]; then
+    payload=$(echo "$payload" | jq --argjson coll "$collection" '. + {collection: {"$id": $coll}}')
+  fi
+  
+  if [[ -n "$important" ]]; then
+    if [[ "$important" == "true" ]]; then
+      payload=$(echo "$payload" | jq '. + {important: true}')
+    elif [[ "$important" == "false" ]]; then
+      payload=$(echo "$payload" | jq '. + {important: false}')
+    else
+      echo '{"error": "invalid_value", "message": "--important must be true or false"}' >&2
+      return 1
+    fi
+  fi
+  
+  local response
+  if response=$(api_request PUT "/raindrop/$id" "$payload"); then
+    echo "$response" | jq '.item'
+  else
+    return $?
+  fi
+}
+
 # Command dispatch
 cmd="${1:-}"
 shift || true
@@ -332,7 +468,10 @@ case "$cmd" in
   add)
     cmd_add "$@"
     ;;
-  update|rm|tag|move|collections)
+  update)
+    cmd_update "$@"
+    ;;
+  rm|tag|move|collections)
     echo "{\"error\": \"not_implemented\", \"message\": \"Command '$cmd' not yet implemented\"}" >&2
     exit 1
     ;;

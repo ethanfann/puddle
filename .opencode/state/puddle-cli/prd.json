@@ -76,7 +76,7 @@
         "puddle update 12345 --important true marks as favorite",
         "Returns updated bookmark JSON"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "write-3",

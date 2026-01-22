@@ -51,3 +51,10 @@ Started: 2026-01-21
 - Validates URL starts with http:// or https://
 - **Files:** scripts/puddle
 - **Learnings:** Use jq to build JSON payload incrementally with `--arg` and `--argjson`
+
+## Task - write-2
+- Implemented `puddle update <id>` to edit bookmark fields
+- Supports --title, --note, --tags, --excerpt, --collection, --important flags
+- --important validates true/false values
+- Uses PUT /raindrop/{id} endpoint
+- **Files:** scripts/puddle
