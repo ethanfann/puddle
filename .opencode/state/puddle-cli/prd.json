@@ -61,7 +61,7 @@
         "--excerpt 'Description' sets description",
         "Invalid URL returns error"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "write-2",
@@ -137,6 +137,19 @@
         "API 4xx errors exit with code 2",
         "404 errors exit with code 3",
         "Success always exits with code 0"
+      ],
+      "passes": false
+    },
+    {
+      "id": "polish-1",
+      "category": "polish",
+      "description": "Switch errors to plain text output with optional --json flag",
+      "steps": [
+        "User-facing errors output plain text to stderr (e.g., 'Error: missing token')",
+        "API data responses remain JSON to stdout",
+        "Global --json flag forces JSON errors for scripting",
+        "Update all commands to use plain text errors",
+        "Exit codes remain unchanged"
       ],
       "passes": false
     },

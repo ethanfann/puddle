@@ -4,7 +4,7 @@ Started: 2026-01-21
 
 ## Codebase Patterns
 - Shell script structure: shebang, set -euo pipefail, VERSION, usage(), global opts, command dispatch
-- Error output: JSON to stderr with error/message keys
+- Error output: JSON to stderr with error/message keys (will switch to plain text in polish-1)
 - Exit codes: 0=success, 1=general error, 2=API error, 3=not found
 - Token loading: Check --token flag first, then RAINDROP_TOKEN env, then ~/.config/puddle/token file
 - API helper: `api_request METHOD /endpoint [data]` handles auth, errors, exit codes
@@ -42,3 +42,12 @@ Started: 2026-01-21
 - Validates ID is numeric, returns exit code 3 for invalid
 - Extracts `.item` from API response
 - **Files:** scripts/puddle
+
+## Task - write-1
+- Implemented `puddle add <url>` to create bookmarks
+- Supports --title, --tags, --collection, --excerpt flags
+- Tags converted from comma-separated string to JSON array
+- Collection uses `{$id: N}` format for API
+- Validates URL starts with http:// or https://
+- **Files:** scripts/puddle
+- **Learnings:** Use jq to build JSON payload incrementally with `--arg` and `--argjson`
