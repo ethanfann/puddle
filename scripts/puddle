@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+VERSION="0.1.0"
+
+usage() {
+  cat <<EOF
+puddle - CLI for Raindrop.io bookmarks
+
+Usage: puddle <command> [options]
+
+Commands:
+  ls [search]              List/search bookmarks
+  get <id>                 Get a single bookmark
+  add <url>                Add a new bookmark
+  update <id>              Update a bookmark
+  rm <id>                  Delete a bookmark
+  tag add|rm <tag>         Bulk tag operations
+  move <collection-id>     Bulk move bookmarks
+  collections              List all collections
+
+Global Options:
+  --token <token>          API token (overrides env/config)
+  --version                Show version
+  --help                   Show this help
+
+Environment:
+  RAINDROP_TOKEN           API token (or ~/.config/puddle/token)
+
+Examples:
+  puddle ls '#react'
+  puddle add 'https://example.com' --title 'Example' --tags 'a,b'
+  puddle get 12345
+  puddle rm 12345
+EOF
+}
+
+# Parse global options first
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --version)
+      echo "$VERSION"
+      exit 0
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+# If no command provided, show usage
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 0
+fi
+
+# Command dispatch (to be implemented)
+cmd="${1:-}"
+shift || true
+
+case "$cmd" in
+  ls|get|add|update|rm|tag|move|collections)
+    echo "{\"error\": \"not_implemented\", \"message\": \"Command '$cmd' not yet implemented\"}" >&2
+    exit 1
+    ;;
+  *)
+    echo "{\"error\": \"unknown_command\", \"message\": \"Unknown command: $cmd\"}" >&2
+    exit 1
+    ;;
+esac

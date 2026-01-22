@@ -1,0 +1,17 @@
+# Progress Log
+PRD: puddle-cli
+Started: 2026-01-21
+
+## Codebase Patterns
+- Shell script structure: shebang, set -euo pipefail, VERSION, usage(), global opts, command dispatch
+- Error output: JSON to stderr with error/message keys
+- Exit codes: 0=success, 1=general error, 2=API error, 3=not found
+
+---
+
+## Task - setup-1
+- Created scripts/puddle executable
+- Usage help on no args or --help
+- Version output on --version
+- Command dispatch stub returns not_implemented JSON error
+- **Files:** scripts/puddle

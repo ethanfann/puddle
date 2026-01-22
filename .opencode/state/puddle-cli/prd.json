@@ -1,0 +1,204 @@
+{
+  "prdName": "puddle-cli",
+  "tasks": [
+    {
+      "id": "setup-1",
+      "category": "setup",
+      "description": "Initialize project structure and create the main executable shell script",
+      "steps": [
+        "scripts/puddle exists and is executable",
+        "Running ./scripts/puddle without args shows usage help",
+        "Running ./scripts/puddle --version outputs version string"
+      ],
+      "passes": true
+    },
+    {
+      "id": "core-1",
+      "category": "core",
+      "description": "Implement token loading from environment variable or config file",
+      "steps": [
+        "With RAINDROP_TOKEN set, commands authenticate successfully",
+        "With token in ~/.config/puddle/token, commands authenticate successfully",
+        "Token flag --token overrides env var and config file",
+        "Missing token shows JSON error to stderr and exits with code 1"
+      ],
+      "passes": false
+    },
+    {
+      "id": "core-2",
+      "category": "core",
+      "description": "Implement puddle ls [search] to list and search bookmarks",
+      "steps": [
+        "puddle ls returns JSON array of bookmarks",
+        "puddle ls '#react' filters by tag",
+        "puddle ls 'type:article' filters by type",
+        "puddle ls --collection 12345 filters by collection",
+        "puddle ls --page 1 --perpage 10 paginates correctly",
+        "Empty results return empty array []"
+      ],
+      "passes": false
+    },
+    {
+      "id": "core-3",
+      "category": "core",
+      "description": "Implement puddle get <id> to fetch a single bookmark",
+      "steps": [
+        "puddle get 12345 returns JSON object with bookmark data",
+        "Invalid ID returns JSON error to stderr, exits with code 3",
+        "Output includes _id, link, title, tags, collection, created fields"
+      ],
+      "passes": false
+    },
+    {
+      "id": "write-1",
+      "category": "write",
+      "description": "Implement puddle add <url> to create new bookmarks",
+      "steps": [
+        "puddle add 'https://example.com' creates bookmark, returns JSON with new _id",
+        "--title 'Custom' overrides auto-detected title",
+        "--tags 'a,b,c' adds tags as array",
+        "--collection 12345 places in specified collection",
+        "--excerpt 'Description' sets description",
+        "Invalid URL returns error"
+      ],
+      "passes": false
+    },
+    {
+      "id": "write-2",
+      "category": "write",
+      "description": "Implement puddle update <id> to edit bookmark fields",
+      "steps": [
+        "puddle update 12345 --title 'New Title' updates title",
+        "puddle update 12345 --note 'Agent note' updates note field",
+        "puddle update 12345 --tags 'x,y' replaces tags",
+        "puddle update 12345 --excerpt 'New desc' updates description",
+        "puddle update 12345 --collection 456 moves to collection",
+        "puddle update 12345 --important true marks as favorite",
+        "Returns updated bookmark JSON"
+      ],
+      "passes": false
+    },
+    {
+      "id": "write-3",
+      "category": "write",
+      "description": "Implement puddle rm <id> to delete bookmarks",
+      "steps": [
+        "puddle rm 12345 moves bookmark to Trash",
+        "Returns success JSON with deleted bookmark info",
+        "Deleting from Trash (collection -99) permanently removes",
+        "Invalid ID returns error with code 3"
+      ],
+      "passes": false
+    },
+    {
+      "id": "bulk-1",
+      "category": "bulk",
+      "description": "Implement puddle tag add|rm <tag> --search '...' for bulk tagging",
+      "steps": [
+        "puddle tag add 'react' --search 'react hooks' adds tag to matching bookmarks",
+        "puddle tag rm 'old' --search '#old' removes tag from matching bookmarks",
+        "--collection 12345 limits operation to collection",
+        "Returns JSON with count of modified bookmarks",
+        "Missing --search flag returns error"
+      ],
+      "passes": false
+    },
+    {
+      "id": "bulk-2",
+      "category": "bulk",
+      "description": "Implement puddle move <collection-id> --search '...' to move bookmarks",
+      "steps": [
+        "puddle move 12345 --search 'type:video' moves matching bookmarks to collection",
+        "--collection 456 limits source to specific collection",
+        "Returns JSON with count of moved bookmarks",
+        "Invalid collection ID returns error"
+      ],
+      "passes": false
+    },
+    {
+      "id": "read-1",
+      "category": "read",
+      "description": "Implement puddle collections to list all collections",
+      "steps": [
+        "Returns JSON array of all collections (root and nested)",
+        "Each collection has _id, title, count, parent fields",
+        "Nested collections show parent.$id reference",
+        "System collections (-1 Unsorted, -99 Trash) are not included"
+      ],
+      "passes": false
+    },
+    {
+      "id": "core-4",
+      "category": "core",
+      "description": "Consistent error handling across all commands",
+      "steps": [
+        "All errors output JSON to stderr: {\"error\": \"...\", \"message\": \"...\", \"status\": N}",
+        "Network errors exit with code 1",
+        "API 4xx errors exit with code 2",
+        "404 errors exit with code 3",
+        "Success always exits with code 0"
+      ],
+      "passes": false
+    },
+    {
+      "id": "docs-1",
+      "category": "docs",
+      "description": "Create Agent Skills compatible skill file",
+      "steps": [
+        "SKILL.md exists with valid YAML frontmatter (name, description, license, compatibility)",
+        "Contains command reference table",
+        "Contains quick examples for common operations",
+        "Contains search syntax quick reference",
+        "Points to references/SEARCH-DSL.md for complex queries"
+      ],
+      "passes": false
+    },
+    {
+      "id": "docs-2",
+      "category": "docs",
+      "description": "Create comprehensive search syntax documentation",
+      "steps": [
+        "references/SEARCH-DSL.md exists",
+        "Documents all search operators (tags, types, dates, fields, boolean)",
+        "Includes dynamic date examples with shell command substitution",
+        "Includes complex query examples",
+        "Includes jq output processing examples"
+      ],
+      "passes": false
+    },
+    {
+      "id": "docs-3",
+      "category": "docs",
+      "description": "Create setup and usage documentation",
+      "steps": [
+        "README.md exists",
+        "Documents how to get Raindrop.io API token",
+        "Documents token configuration (env var and config file)",
+        "Documents basic usage examples",
+        "Documents dependencies (curl, jq, bash)"
+      ],
+      "passes": false
+    }
+  ],
+  "context": {
+    "patterns": [
+      "Raindrop API base: https://api.raindrop.io/rest/v1",
+      "Auth header: Authorization: Bearer $TOKEN",
+      "All responses are JSON"
+    ],
+    "keyFiles": [
+      "scripts/puddle",
+      "SKILL.md",
+      "references/SEARCH-DSL.md"
+    ],
+    "nonGoals": [
+      "OAuth flow (use test token)",
+      "Local caching",
+      "Interactive prompts",
+      "Colored output",
+      "Windows native support",
+      "Highlights (v2)",
+      "Tags listing (v2)"
+    ]
+  }
+}
