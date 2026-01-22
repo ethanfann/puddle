@@ -123,3 +123,14 @@ Started: 2026-01-21
 - **Files:** scripts/puddle
 - **Learnings:** Use `${1:-}` in helper params to handle unset vars with set -u
 
+## Task - docs-1
+- Created SKILL.md with YAML frontmatter (name, description, globs, compatibility, license)
+- Added command reference table with all 8 commands
+- Added quick examples section with common operations
+- Added search syntax quick reference table
+- Added command options documentation
+- Added jq output processing examples
+- Added exit codes table
+- Points to references/SEARCH-DSL.md for complex queries
+- **Files:** SKILL.md
+

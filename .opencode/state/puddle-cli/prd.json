@@ -177,7 +177,7 @@
         "Contains search syntax quick reference",
         "Points to references/SEARCH-DSL.md for complex queries"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "docs-2",
