@@ -203,7 +203,7 @@
         "Documents basic usage examples",
         "Documents dependencies (curl, jq, bash)"
       ],
-      "passes": false
+      "passes": true
     }
   ],
   "context": {

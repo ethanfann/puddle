@@ -144,3 +144,15 @@ Started: 2026-01-21
 - Added pagination example for large result sets
 - **Files:** references/SEARCH-DSL.md
 
+## Task - docs-3
+- Created README.md with project overview and setup instructions
+- Documented requirements (bash 4+, curl, jq) with install commands
+- Documented API token acquisition from Raindrop.io integrations page
+- Documented all 3 token config methods: --token flag, RAINDROP_TOKEN env, config file
+- Added quick start examples for all major commands
+- Added command reference table
+- Added search examples and output processing with jq
+- Added exit codes table and global options
+- Links to SKILL.md and SEARCH-DSL.md for detailed docs
+- **Files:** README.md
+
