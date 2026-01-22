@@ -9,6 +9,16 @@ compatibility: Requires bash 4+, curl, jq
 
 Bash CLI for managing Raindrop.io bookmarks. Designed for AI agents to programmatically manage bookmarks.
 
+## Usage
+
+**IMPORTANT**: Use the bundled script, not a global `puddle` command:
+
+```bash
+./scripts/puddle <command> [options]
+```
+
+All examples below assume you're running from the skill's base directory.
+
 ## Setup
 
 ```bash
@@ -24,38 +34,38 @@ echo "your-token" > ~/.config/puddle/token
 
 | Command | Description |
 |---------|-------------|
-| `puddle ls [search]` | List/search bookmarks |
-| `puddle get <id>` | Get single bookmark |
-| `puddle add <url>` | Create bookmark |
-| `puddle update <id>` | Update bookmark |
-| `puddle rm <id>` | Delete bookmark |
-| `puddle tag add\|rm <tag> --search '...'` | Bulk tag operations |
-| `puddle move <collection-id> --search '...'` | Bulk move bookmarks |
-| `puddle collections` | List all collections |
+| `./scripts/puddle ls [search]` | List/search bookmarks |
+| `./scripts/puddle get <id>` | Get single bookmark |
+| `./scripts/puddle add <url>` | Create bookmark |
+| `./scripts/puddle update <id>` | Update bookmark |
+| `./scripts/puddle rm <id>` | Delete bookmark |
+| `./scripts/puddle tag add\|rm <tag> --search '...'` | Bulk tag operations |
+| `./scripts/puddle move <collection-id> --search '...'` | Bulk move bookmarks |
+| `./scripts/puddle collections` | List all collections |
 
 ## Quick Examples
 
 ```bash
 # Search by tag
-puddle ls '#react'
+./scripts/puddle ls '#react'
 
 # Search by type
-puddle ls 'type:article'
+./scripts/puddle ls 'type:article'
 
 # Add bookmark with metadata
-puddle add 'https://example.com' --title 'Example' --tags 'dev,reference' --collection 12345
+./scripts/puddle add 'https://example.com' --title 'Example' --tags 'dev,reference' --collection 12345
 
 # Update bookmark
-puddle update 12345 --tags 'updated,tags' --important true
+./scripts/puddle update 12345 --tags 'updated,tags' --important true
 
 # Bulk tag all matching bookmarks
-puddle tag add 'archived' --search 'created:<2024-01-01'
+./scripts/puddle tag add 'archived' --search 'created:<2024-01-01'
 
 # Move bookmarks to collection
-puddle move 67890 --search '#old-project'
+./scripts/puddle move 67890 --search '#old-project'
 
 # Get collection IDs
-puddle collections | jq '.[] | {id: ._id, title}'
+./scripts/puddle collections | jq '.[] | {id: ._id, title}'
 ```
 
 ## Command Options
@@ -119,16 +129,16 @@ For complex queries, see [references/search-dsl.md](references/search-dsl.md).
 
 ```bash
 # Extract URLs only
-puddle ls '#react' | jq -r '.[].link'
+./scripts/puddle ls '#react' | jq -r '.[].link'
 
 # Get titles and IDs
-puddle ls 'type:video' | jq '.[] | {id: ._id, title}'
+./scripts/puddle ls 'type:video' | jq '.[] | {id: ._id, title}'
 
 # Count results
-puddle ls '#project' | jq 'length'
+./scripts/puddle ls '#project' | jq 'length'
 
 # Filter locally
-puddle ls | jq '[.[] | select(.tags | contains(["important"]))]'
+./scripts/puddle ls | jq '[.[] | select(.tags | contains(["important"]))]'
 ```
 
 ## Exit Codes
