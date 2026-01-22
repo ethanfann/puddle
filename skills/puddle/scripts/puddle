@@ -18,8 +18,8 @@ Commands:
   add <url>                Add a new bookmark
   update <id>              Update a bookmark
   rm <id>                  Delete a bookmark
-  tag add|rm <tag>         Bulk tag operations
-  move <collection-id>     Bulk move bookmarks
+  tag add|rm <tag>         Bulk tag operations (--search or --ids)
+  move <collection-id>     Bulk move bookmarks (--search or --ids)
   collections              List all collections
 
 Global Options:
@@ -454,10 +454,10 @@ cmd_rm() {
   fi
 }
 
-# Command: tag add|rm <tag> --search '...'
+# Command: tag add|rm <tag> --search '...' | --ids '1,2,3'
 cmd_tag() {
   if [[ $# -lt 2 ]]; then
-    error 1 "missing_argument" "Usage: puddle tag add|rm <tag> --search '...' [--collection N]"
+    error 1 "missing_argument" "Usage: puddle tag add|rm <tag> (--search '...' | --ids '1,2,3') [--collection N]"
     return 1
   fi
   
@@ -471,6 +471,7 @@ cmd_tag() {
   
   local tag=""
   local search=""
+  local ids=""
   local collection="0"
   
   # Parse arguments
@@ -480,6 +481,11 @@ cmd_tag() {
         shift
         require_flag_value "${1:-}" "$#" "--search" || return 1
         search="$1"; shift
+        ;;
+      --ids)
+        shift
+        require_flag_value "${1:-}" "$#" "--ids" || return 1
+        ids="$1"; shift
         ;;
       --collection)
         shift
@@ -501,8 +507,8 @@ cmd_tag() {
     return 1
   fi
   
-  if [[ -z "$search" ]]; then
-    error 1 "missing_search" "--search is required for bulk tag operations"
+  if [[ -z "$search" && -z "$ids" ]]; then
+    error 1 "missing_filter" "--search or --ids is required for bulk tag operations"
     return 1
   fi
   
@@ -515,11 +521,20 @@ cmd_tag() {
     payload=$(jq -n --arg tag "$tag" '{"$unset": {tags: [$tag]}}')
   fi
   
-  # URL encode search
-  local encoded_search
-  encoded_search=$(printf '%s' "$search" | jq -sRr @uri)
+  # Add ids to payload if specified
+  if [[ -n "$ids" ]]; then
+    local ids_json
+    ids_json=$(echo "$ids" | tr ',' '\n' | jq -R 'tonumber' | jq -s .)
+    payload=$(echo "$payload" | jq --argjson ids "$ids_json" '. + {ids: $ids}')
+  fi
   
-  local endpoint="/raindrops/$collection?search=$encoded_search"
+  # Build endpoint
+  local endpoint="/raindrops/$collection"
+  if [[ -n "$search" ]]; then
+    local encoded_search
+    encoded_search=$(printf '%s' "$search" | jq -sRr @uri)
+    endpoint="$endpoint?search=$encoded_search"
+  fi
   
   local response
   if response=$(api_request PUT "$endpoint" "$payload"); then
@@ -529,15 +544,16 @@ cmd_tag() {
   fi
 }
 
-# Command: move <collection-id> --search '...'
+# Command: move <collection-id> --search '...' | --ids '1,2,3'
 cmd_move() {
   if [[ $# -eq 0 ]]; then
-    error 1 "missing_argument" "Usage: puddle move <target-collection-id> --search '...' [--collection N]"
+    error 1 "missing_argument" "Usage: puddle move <target-collection-id> (--search '...' | --ids '1,2,3') [--collection N]"
     return 1
   fi
   
   local target_collection=""
   local search=""
+  local ids=""
   local source_collection="0"
   
   # Parse arguments
@@ -547,6 +563,11 @@ cmd_move() {
         shift
         require_flag_value "${1:-}" "$#" "--search" || return 1
         search="$1"; shift
+        ;;
+      --ids)
+        shift
+        require_flag_value "${1:-}" "$#" "--ids" || return 1
+        ids="$1"; shift
         ;;
       --collection)
         shift
@@ -574,8 +595,8 @@ cmd_move() {
     return 1
   fi
   
-  if [[ -z "$search" ]]; then
-    error 1 "missing_search" "--search is required for bulk move operations"
+  if [[ -z "$search" && -z "$ids" ]]; then
+    error 1 "missing_filter" "--search or --ids is required for bulk move operations"
     return 1
   fi
   
@@ -583,11 +604,20 @@ cmd_move() {
   local payload
   payload=$(jq -n --argjson coll "$target_collection" '{collection: {"$id": $coll}}')
   
-  # URL encode search
-  local encoded_search
-  encoded_search=$(printf '%s' "$search" | jq -sRr @uri)
+  # Add ids to payload if specified
+  if [[ -n "$ids" ]]; then
+    local ids_json
+    ids_json=$(echo "$ids" | tr ',' '\n' | jq -R 'tonumber' | jq -s .)
+    payload=$(echo "$payload" | jq --argjson ids "$ids_json" '. + {ids: $ids}')
+  fi
   
-  local endpoint="/raindrops/$source_collection?search=$encoded_search"
+  # Build endpoint
+  local endpoint="/raindrops/$source_collection"
+  if [[ -n "$search" ]]; then
+    local encoded_search
+    encoded_search=$(printf '%s' "$search" | jq -sRr @uri)
+    endpoint="$endpoint?search=$encoded_search"
+  fi
   
   local response
   if response=$(api_request PUT "$endpoint" "$payload"); then
