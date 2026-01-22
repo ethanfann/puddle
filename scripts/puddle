@@ -3,7 +3,8 @@ set -euo pipefail
 
 VERSION="0.1.0"
 TOKEN=""
-API_BASE="https://api.raindrop.io/rest/v1"  # Will be used in command implementations
+JSON_ERRORS=false
+API_BASE="https://api.raindrop.io/rest/v1"
 
 usage() {
   cat <<EOF
@@ -23,6 +24,7 @@ Commands:
 
 Global Options:
   --token <token>          API token (overrides env/config)
+  --json                   Output errors as JSON (for scripting)
   --version                Show version
   --help                   Show this help
 
@@ -51,10 +53,14 @@ while [[ $# -gt 0 ]]; do
     --token)
       shift
       if [[ $# -eq 0 ]]; then
-        echo '{"error": "missing_value", "message": "--token requires a value"}' >&2
+        echo 'Error: --token requires a value' >&2
         exit 1
       fi
       TOKEN="$1"
+      shift
+      ;;
+    --json)
+      JSON_ERRORS=true
       shift
       ;;
     *)
@@ -62,6 +68,20 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Helper: output error message
+error() {
+  local code="$1"
+  local type="$2"
+  local message="$3"
+  
+  if [[ "$JSON_ERRORS" == "true" ]]; then
+    echo "{\"error\": \"$type\", \"message\": \"$message\"}" >&2
+  else
+    echo "Error: $message" >&2
+  fi
+  return "$code"
+}
 
 # If no command provided, show usage
 if [[ $# -eq 0 ]]; then
@@ -82,7 +102,7 @@ fi
 
 # Verify token exists
 if [[ -z "$TOKEN" ]]; then
-  echo '{"error": "missing_token", "message": "No token found. Set RAINDROP_TOKEN env var, create ~/.config/puddle/token file, or use --token flag"}' >&2
+  error 1 "missing_token" "No token found. Set RAINDROP_TOKEN env var, create ~/.config/puddle/token file, or use --token flag"
   exit 1
 fi
 
@@ -112,13 +132,13 @@ api_request() {
     echo "$body"
     return 0
   elif [[ "$http_code" == "404" ]]; then
-    echo "{\"error\": \"not_found\", \"message\": \"Resource not found\", \"status\": $http_code}" >&2
+    error 3 "not_found" "Resource not found (HTTP $http_code)"
     return 3
   elif [[ "$http_code" -ge 400 && "$http_code" -lt 500 ]]; then
-    echo "{\"error\": \"api_error\", \"message\": \"API error\", \"status\": $http_code}" >&2
+    error 2 "api_error" "API error (HTTP $http_code)"
     return 2
   else
-    echo "{\"error\": \"network_error\", \"message\": \"Request failed\", \"status\": $http_code}" >&2
+    error 1 "network_error" "Request failed (HTTP $http_code)"
     return 1
   fi
 }
@@ -136,7 +156,7 @@ cmd_ls() {
       --collection)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          error 1 "missing_value" "--collection requires a value"
           return 1
         fi
         collection="$1"
@@ -145,7 +165,7 @@ cmd_ls() {
       --page)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--page requires a value"}' >&2
+          error 1 "missing_value" "--page requires a value"
           return 1
         fi
         page="$1"
@@ -154,7 +174,7 @@ cmd_ls() {
       --perpage)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--perpage requires a value"}' >&2
+          error 1 "missing_value" "--perpage requires a value"
           return 1
         fi
         perpage="$1"
@@ -194,7 +214,7 @@ cmd_ls() {
 # Command: get <id>
 cmd_get() {
   if [[ $# -eq 0 ]]; then
-    echo '{"error": "missing_argument", "message": "Usage: puddle get <id>"}' >&2
+    error 1 "missing_argument" "Usage: puddle get <id>"
     return 1
   fi
   
@@ -202,7 +222,7 @@ cmd_get() {
   
   # Validate id is numeric
   if ! [[ "$id" =~ ^[0-9]+$ ]]; then
-    echo '{"error": "invalid_id", "message": "Bookmark ID must be numeric"}' >&2
+    error 3 "invalid_id" "Bookmark ID must be numeric"
     return 3
   fi
   
@@ -217,7 +237,7 @@ cmd_get() {
 # Command: add <url>
 cmd_add() {
   if [[ $# -eq 0 ]]; then
-    echo '{"error": "missing_argument", "message": "Usage: puddle add <url> [--title ...] [--tags ...] [--collection ...] [--excerpt ...]"}' >&2
+    error 1 "missing_argument" "Usage: puddle add <url> [--title ...] [--tags ...] [--collection ...] [--excerpt ...]"
     return 1
   fi
   
@@ -233,7 +253,7 @@ cmd_add() {
       --title)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--title requires a value"}' >&2
+          error 1 "missing_value" "--title requires a value"
           return 1
         fi
         title="$1"
@@ -242,7 +262,7 @@ cmd_add() {
       --tags)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--tags requires a value"}' >&2
+          error 1 "missing_value" "--tags requires a value"
           return 1
         fi
         tags="$1"
@@ -251,7 +271,7 @@ cmd_add() {
       --collection)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          error 1 "missing_value" "--collection requires a value"
           return 1
         fi
         collection="$1"
@@ -260,7 +280,7 @@ cmd_add() {
       --excerpt)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--excerpt requires a value"}' >&2
+          error 1 "missing_value" "--excerpt requires a value"
           return 1
         fi
         excerpt="$1"
@@ -277,13 +297,13 @@ cmd_add() {
   
   # Validate URL
   if [[ -z "$url" ]]; then
-    echo '{"error": "missing_url", "message": "URL is required"}' >&2
+    error 1 "missing_url" "URL is required"
     return 1
   fi
   
   # Basic URL validation
   if ! [[ "$url" =~ ^https?:// ]]; then
-    echo '{"error": "invalid_url", "message": "URL must start with http:// or https://"}' >&2
+    error 1 "invalid_url" "URL must start with http:// or https://"
     return 1
   fi
   
@@ -321,7 +341,7 @@ cmd_add() {
 # Command: update <id>
 cmd_update() {
   if [[ $# -eq 0 ]]; then
-    echo '{"error": "missing_argument", "message": "Usage: puddle update <id> [--title ...] [--note ...] [--tags ...] [--excerpt ...] [--collection ...] [--important true|false]"}' >&2
+    error 1 "missing_argument" "Usage: puddle update <id> [--title ...] [--note ...] [--tags ...] [--excerpt ...] [--collection ...] [--important true|false]"
     return 1
   fi
   
@@ -339,7 +359,7 @@ cmd_update() {
       --title)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--title requires a value"}' >&2
+          error 1 "missing_value" "--title requires a value"
           return 1
         fi
         title="$1"
@@ -348,7 +368,7 @@ cmd_update() {
       --note)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--note requires a value"}' >&2
+          error 1 "missing_value" "--note requires a value"
           return 1
         fi
         note="$1"
@@ -357,7 +377,7 @@ cmd_update() {
       --tags)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--tags requires a value"}' >&2
+          error 1 "missing_value" "--tags requires a value"
           return 1
         fi
         tags="$1"
@@ -366,7 +386,7 @@ cmd_update() {
       --excerpt)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--excerpt requires a value"}' >&2
+          error 1 "missing_value" "--excerpt requires a value"
           return 1
         fi
         excerpt="$1"
@@ -375,7 +395,7 @@ cmd_update() {
       --collection)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          error 1 "missing_value" "--collection requires a value"
           return 1
         fi
         collection="$1"
@@ -384,7 +404,7 @@ cmd_update() {
       --important)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--important requires true or false"}' >&2
+          error 1 "missing_value" "--important requires true or false"
           return 1
         fi
         important="$1"
@@ -401,12 +421,12 @@ cmd_update() {
   
   # Validate id
   if [[ -z "$id" ]]; then
-    echo '{"error": "missing_id", "message": "Bookmark ID is required"}' >&2
+    error 1 "missing_id" "Bookmark ID is required"
     return 1
   fi
   
   if ! [[ "$id" =~ ^[0-9]+$ ]]; then
-    echo '{"error": "invalid_id", "message": "Bookmark ID must be numeric"}' >&2
+    error 3 "invalid_id" "Bookmark ID must be numeric"
     return 3
   fi
   
@@ -441,7 +461,7 @@ cmd_update() {
     elif [[ "$important" == "false" ]]; then
       payload=$(echo "$payload" | jq '. + {important: false}')
     else
-      echo '{"error": "invalid_value", "message": "--important must be true or false"}' >&2
+      error 1 "invalid_value" "--important must be true or false"
       return 1
     fi
   fi
@@ -457,7 +477,7 @@ cmd_update() {
 # Command: rm <id>
 cmd_rm() {
   if [[ $# -eq 0 ]]; then
-    echo '{"error": "missing_argument", "message": "Usage: puddle rm <id>"}' >&2
+    error 1 "missing_argument" "Usage: puddle rm <id>"
     return 1
   fi
   
@@ -465,7 +485,7 @@ cmd_rm() {
   
   # Validate id is numeric
   if ! [[ "$id" =~ ^[0-9]+$ ]]; then
-    echo '{"error": "invalid_id", "message": "Bookmark ID must be numeric"}' >&2
+    error 3 "invalid_id" "Bookmark ID must be numeric"
     return 3
   fi
   
@@ -480,7 +500,7 @@ cmd_rm() {
 # Command: tag add|rm <tag> --search '...'
 cmd_tag() {
   if [[ $# -lt 2 ]]; then
-    echo '{"error": "missing_argument", "message": "Usage: puddle tag add|rm <tag> --search '\''...'\'' [--collection N]"}' >&2
+    error 1 "missing_argument" "Usage: puddle tag add|rm <tag> --search '...' [--collection N]"
     return 1
   fi
   
@@ -488,7 +508,7 @@ cmd_tag() {
   shift
   
   if [[ "$action" != "add" && "$action" != "rm" ]]; then
-    echo '{"error": "invalid_action", "message": "Tag action must be '\''add'\'' or '\''rm'\''"}' >&2
+    error 1 "invalid_action" "Tag action must be 'add' or 'rm'"
     return 1
   fi
   
@@ -502,7 +522,7 @@ cmd_tag() {
       --search)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--search requires a value"}' >&2
+          error 1 "missing_value" "--search requires a value"
           return 1
         fi
         search="$1"
@@ -511,7 +531,7 @@ cmd_tag() {
       --collection)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          error 1 "missing_value" "--collection requires a value"
           return 1
         fi
         collection="$1"
@@ -528,12 +548,12 @@ cmd_tag() {
   
   # Validate required args
   if [[ -z "$tag" ]]; then
-    echo '{"error": "missing_tag", "message": "Tag name is required"}' >&2
+    error 1 "missing_tag" "Tag name is required"
     return 1
   fi
   
   if [[ -z "$search" ]]; then
-    echo '{"error": "missing_search", "message": "--search is required for bulk tag operations"}' >&2
+    error 1 "missing_search" "--search is required for bulk tag operations"
     return 1
   fi
   
@@ -563,7 +583,7 @@ cmd_tag() {
 # Command: move <collection-id> --search '...'
 cmd_move() {
   if [[ $# -eq 0 ]]; then
-    echo '{"error": "missing_argument", "message": "Usage: puddle move <target-collection-id> --search '\''...'\'' [--collection N]"}' >&2
+    error 1 "missing_argument" "Usage: puddle move <target-collection-id> --search '...' [--collection N]"
     return 1
   fi
   
@@ -577,7 +597,7 @@ cmd_move() {
       --search)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--search requires a value"}' >&2
+          error 1 "missing_value" "--search requires a value"
           return 1
         fi
         search="$1"
@@ -586,7 +606,7 @@ cmd_move() {
       --collection)
         shift
         if [[ $# -eq 0 || "$1" == --* ]]; then
-          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          error 1 "missing_value" "--collection requires a value"
           return 1
         fi
         source_collection="$1"
@@ -603,18 +623,18 @@ cmd_move() {
   
   # Validate required args
   if [[ -z "$target_collection" ]]; then
-    echo '{"error": "missing_collection", "message": "Target collection ID is required"}' >&2
+    error 1 "missing_collection" "Target collection ID is required"
     return 1
   fi
   
   # Validate target collection is numeric (can be negative for system collections)
   if ! [[ "$target_collection" =~ ^-?[0-9]+$ ]]; then
-    echo '{"error": "invalid_collection", "message": "Collection ID must be numeric"}' >&2
+    error 1 "invalid_collection" "Collection ID must be numeric"
     return 1
   fi
   
   if [[ -z "$search" ]]; then
-    echo '{"error": "missing_search", "message": "--search is required for bulk move operations"}' >&2
+    error 1 "missing_search" "--search is required for bulk move operations"
     return 1
   fi
   
