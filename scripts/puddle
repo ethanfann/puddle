@@ -2,6 +2,8 @@
 set -euo pipefail
 
 VERSION="0.1.0"
+TOKEN=""
+API_BASE="https://api.raindrop.io/rest/v1"  # Will be used in command implementations
 
 usage() {
   cat <<EOF
@@ -46,6 +48,15 @@ while [[ $# -gt 0 ]]; do
       usage
       exit 0
       ;;
+    --token)
+      shift
+      if [[ $# -eq 0 ]]; then
+        echo '{"error": "missing_value", "message": "--token requires a value"}' >&2
+        exit 1
+      fi
+      TOKEN="$1"
+      shift
+      ;;
     *)
       break
       ;;
@@ -56,6 +67,23 @@ done
 if [[ $# -eq 0 ]]; then
   usage
   exit 0
+fi
+
+# Load token if not already set by --token flag
+if [[ -z "$TOKEN" ]]; then
+  # Check environment variable
+  if [[ -n "${RAINDROP_TOKEN:-}" ]]; then
+    TOKEN="$RAINDROP_TOKEN"
+  # Check config file
+  elif [[ -f "$HOME/.config/puddle/token" ]]; then
+    TOKEN=$(cat "$HOME/.config/puddle/token" | tr -d '\n')
+  fi
+fi
+
+# Verify token exists
+if [[ -z "$TOKEN" ]]; then
+  echo '{"error": "missing_token", "message": "No token found. Set RAINDROP_TOKEN env var, create ~/.config/puddle/token file, or use --token flag"}' >&2
+  exit 1
 fi
 
 # Command dispatch (to be implemented)

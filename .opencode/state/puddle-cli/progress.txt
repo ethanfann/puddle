@@ -6,6 +6,7 @@ Started: 2026-01-21
 - Shell script structure: shebang, set -euo pipefail, VERSION, usage(), global opts, command dispatch
 - Error output: JSON to stderr with error/message keys
 - Exit codes: 0=success, 1=general error, 2=API error, 3=not found
+- Token loading: Check --token flag first, then RAINDROP_TOKEN env, then ~/.config/puddle/token file
 
 ---
 
@@ -15,3 +16,11 @@ Started: 2026-01-21
 - Version output on --version
 - Command dispatch stub returns not_implemented JSON error
 - **Files:** scripts/puddle
+
+## Task - core-1
+- Implemented token loading from env var, config file, and --token flag
+- --token flag overrides env var and config file
+- Missing token shows JSON error and exits with code 1
+- Token stored in TOKEN variable for use by commands
+- **Files:** scripts/puddle
+- **Learnings:** Use `cat file | tr -d '\n'` to load token without trailing newline

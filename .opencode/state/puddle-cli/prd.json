@@ -22,7 +22,7 @@
         "Token flag --token overrides env var and config file",
         "Missing token shows JSON error to stderr and exits with code 1"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "core-2",
