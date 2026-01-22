@@ -86,12 +86,120 @@ if [[ -z "$TOKEN" ]]; then
   exit 1
 fi
 
-# Command dispatch (to be implemented)
+# Helper: make API request
+api_request() {
+  local method="$1"
+  local endpoint="$2"
+  local data="${3:-}"
+  
+  local curl_args=(
+    -s
+    -X "$method"
+    -H "Authorization: Bearer $TOKEN"
+    -H "Content-Type: application/json"
+  )
+  
+  if [[ -n "$data" ]]; then
+    curl_args+=(-d "$data")
+  fi
+  
+  local response http_code body
+  response=$(curl "${curl_args[@]}" -w "\n%{http_code}" "$API_BASE$endpoint")
+  http_code=$(echo "$response" | tail -n1)
+  body=$(echo "$response" | sed '$d')
+  
+  if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
+    echo "$body"
+    return 0
+  elif [[ "$http_code" == "404" ]]; then
+    echo "{\"error\": \"not_found\", \"message\": \"Resource not found\", \"status\": $http_code}" >&2
+    return 3
+  elif [[ "$http_code" -ge 400 && "$http_code" -lt 500 ]]; then
+    echo "{\"error\": \"api_error\", \"message\": \"API error\", \"status\": $http_code}" >&2
+    return 2
+  else
+    echo "{\"error\": \"network_error\", \"message\": \"Request failed\", \"status\": $http_code}" >&2
+    return 1
+  fi
+}
+
+# Command: ls [search]
+cmd_ls() {
+  local search=""
+  local collection="0"
+  local page="0"
+  local perpage="25"
+  
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --collection)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--collection requires a value"}' >&2
+          return 1
+        fi
+        collection="$1"
+        shift
+        ;;
+      --page)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--page requires a value"}' >&2
+          return 1
+        fi
+        page="$1"
+        shift
+        ;;
+      --perpage)
+        shift
+        if [[ $# -eq 0 || "$1" == --* ]]; then
+          echo '{"error": "missing_value", "message": "--perpage requires a value"}' >&2
+          return 1
+        fi
+        perpage="$1"
+        shift
+        ;;
+      *)
+        search="$1"
+        shift
+        ;;
+    esac
+  done
+  
+  local endpoint="/raindrops/$collection"
+  local params=()
+  
+  if [[ -n "$search" ]]; then
+    # URL encode the search string
+    local encoded_search
+    encoded_search=$(printf '%s' "$search" | jq -sRr @uri)
+    params+=("search=$encoded_search")
+  fi
+  params+=("page=$page")
+  params+=("perpage=$perpage")
+  
+  local query_string
+  query_string=$(printf "%s&" "${params[@]}" | sed 's/&$//')
+  endpoint="$endpoint?$query_string"
+  
+  local response
+  if response=$(api_request GET "$endpoint"); then
+    echo "$response" | jq '.items'
+  else
+    return $?
+  fi
+}
+
+# Command dispatch
 cmd="${1:-}"
 shift || true
 
 case "$cmd" in
-  ls|get|add|update|rm|tag|move|collections)
+  ls)
+    cmd_ls "$@"
+    ;;
+  get|add|update|rm|tag|move|collections)
     echo "{\"error\": \"not_implemented\", \"message\": \"Command '$cmd' not yet implemented\"}" >&2
     exit 1
     ;;

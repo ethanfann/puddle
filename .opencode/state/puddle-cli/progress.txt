@@ -7,6 +7,9 @@ Started: 2026-01-21
 - Error output: JSON to stderr with error/message keys
 - Exit codes: 0=success, 1=general error, 2=API error, 3=not found
 - Token loading: Check --token flag first, then RAINDROP_TOKEN env, then ~/.config/puddle/token file
+- API helper: `api_request METHOD /endpoint [data]` handles auth, errors, exit codes
+- URL encoding: `printf '%s' "$str" | jq -sRr @uri`
+- Response extraction: `echo "$response" | jq '.items'`
 
 ---
 
@@ -24,3 +27,12 @@ Started: 2026-01-21
 - Token stored in TOKEN variable for use by commands
 - **Files:** scripts/puddle
 - **Learnings:** Use `cat file | tr -d '\n'` to load token without trailing newline
+
+## Task - core-2
+- Implemented `puddle ls [search]` with API integration
+- Added `api_request` helper function for all API calls
+- Supports --collection, --page, --perpage flags
+- URL encodes search query with jq
+- Extracts `.items` array from response
+- **Files:** scripts/puddle
+- **Learnings:** Use `jq -sRr @uri` for URL encoding in bash

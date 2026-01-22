@@ -36,7 +36,7 @@
         "puddle ls --page 1 --perpage 10 paginates correctly",
         "Empty results return empty array []"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "core-3",
