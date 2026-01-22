@@ -134,3 +134,13 @@ Started: 2026-01-21
 - Points to references/SEARCH-DSL.md for complex queries
 - **Files:** SKILL.md
 
+## Task - docs-2
+- Created references/SEARCH-DSL.md with comprehensive search syntax docs
+- Documented all operators: tags (#), types, dates (created:), fields (title:, domain:, link:, etc.)
+- Added special filters: notag, broken, duplicate, important, cache
+- Added dynamic date examples with GNU and BSD date syntax
+- Added complex query examples combining multiple operators
+- Added extensive jq processing examples (filter, sort, group, export)
+- Added pagination example for large result sets
+- **Files:** references/SEARCH-DSL.md
+

@@ -190,7 +190,7 @@
         "Includes complex query examples",
         "Includes jq output processing examples"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "docs-3",
