@@ -28,10 +28,10 @@ git clone https://github.com/your-org/puddle.git
 cd puddle
 
 # Make executable (already set)
-chmod +x scripts/puddle
+chmod +x skills/puddle/scripts/puddle
 
 # Add to PATH (optional)
-export PATH="$PATH:$(pwd)/scripts"
+export PATH="$PATH:$(pwd)/skills/puddle/scripts"
 ```
 
 ## Getting an API Token

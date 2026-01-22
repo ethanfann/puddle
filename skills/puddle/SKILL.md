@@ -1,9 +1,8 @@
 ---
 name: puddle
-description: CLI for Raindrop.io bookmark management - search, create, update, delete, bulk operations
-globs: ["scripts/puddle"]
-compatibility: bash 4+, curl, jq
+description: CLI for Raindrop.io bookmark management - search, create, update, delete, bulk operations. Use when working with Raindrop.io bookmarks or when the user mentions bookmarks, link saving, or Raindrop.
 license: MIT
+compatibility: Requires bash 4+, curl, jq
 ---
 
 # puddle
