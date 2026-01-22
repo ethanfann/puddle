@@ -91,3 +91,11 @@ Started: 2026-01-21
 - Returns combined array with _id, title, count, parent fields
 - **Files:** scripts/puddle
 - **Learnings:** Use `cmd=$(subshell) || ret=$?` pattern to capture both output and return code
+
+## Task - core-4
+- Verified consistent error handling across all commands
+- All errors output JSON to stderr with error/message keys
+- API errors include status field with HTTP code
+- Exit codes: 0=success, 1=general, 2=API 4xx, 3=not found/invalid ID
+- No changes needed - patterns were already consistent
+- **Files:** (audit only)

@@ -138,7 +138,7 @@
         "404 errors exit with code 3",
         "Success always exits with code 0"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "polish-1",
