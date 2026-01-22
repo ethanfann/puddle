@@ -36,3 +36,9 @@ Started: 2026-01-21
 - Extracts `.items` array from response
 - **Files:** scripts/puddle
 - **Learnings:** Use `jq -sRr @uri` for URL encoding in bash
+
+## Task - core-3
+- Implemented `puddle get <id>` to fetch single bookmark
+- Validates ID is numeric, returns exit code 3 for invalid
+- Extracts `.item` from API response
+- **Files:** scripts/puddle

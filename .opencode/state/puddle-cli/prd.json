@@ -47,7 +47,7 @@
         "Invalid ID returns JSON error to stderr, exits with code 3",
         "Output includes _id, link, title, tags, collection, created fields"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "write-1",
