@@ -4,12 +4,16 @@ Started: 2026-01-21
 
 ## Codebase Patterns
 - Shell script structure: shebang, set -euo pipefail, VERSION, usage(), global opts, command dispatch
-- Error output: JSON to stderr with error/message keys (will switch to plain text in polish-1)
+- Error output: plain text to stderr by default; JSON with --json flag
+- Error helper: `error <exit-code> <error-type> <message>`
 - Exit codes: 0=success, 1=general error, 2=API error, 3=not found
 - Token loading: Check --token flag first, then RAINDROP_TOKEN env, then ~/.config/puddle/token file
 - API helper: `api_request METHOD /endpoint [data]` handles auth, errors, exit codes
 - URL encoding: `printf '%s' "$str" | jq -sRr @uri`
 - Response extraction: `echo "$response" | jq '.items'`
+- Flag validation: `require_flag_value "${1:-}" "$#" "--flag" || return 1`
+- Tags parsing: `parse_tags "a,b,c"` -> `["a","b","c"]`
+- JSON building: `json_add_string "$json" "field" "$value"`, `json_add_json "$json" "field" "$json_value"`
 
 ---
 
@@ -99,3 +103,23 @@ Started: 2026-01-21
 - Exit codes: 0=success, 1=general, 2=API 4xx, 3=not found/invalid ID
 - No changes needed - patterns were already consistent
 - **Files:** (audit only)
+
+## Task - polish-1
+- Added `error()` helper function for consistent error output
+- Added global `--json` flag to force JSON errors for scripting
+- Errors now plain text by default: "Error: <message>"
+- JSON errors when `--json` flag: `{"error": "<type>", "message": "<msg>"}`
+- Replaced all 35+ hardcoded JSON error calls with `error()` helper
+- **Files:** scripts/puddle
+- **Learnings:** Global flags must be parsed before command dispatch
+
+
+## Task - polish-2
+- Added `require_flag_value()` helper for consistent flag value validation
+- Added `parse_tags()` helper to convert comma-separated string to JSON array
+- Added `json_add_string()` and `json_add_json()` helpers for payload building
+- Refactored cmd_ls, cmd_add, cmd_update, cmd_tag, cmd_move to use helpers
+- Reduced script size by ~48 lines (707 -> 659)
+- **Files:** scripts/puddle
+- **Learnings:** Use `${1:-}` in helper params to handle unset vars with set -u
+

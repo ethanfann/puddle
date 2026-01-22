@@ -151,7 +151,7 @@
         "Update all commands to use plain text errors",
         "Exit codes remain unchanged"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "polish-2",
@@ -164,7 +164,7 @@
         "Refactor cmd_add and cmd_update to use helpers",
         "No behavior changes - pure refactor"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "docs-1",

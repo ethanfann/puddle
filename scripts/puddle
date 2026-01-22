@@ -83,6 +83,45 @@ error() {
   return "$code"
 }
 
+# Helper: require flag value - checks next arg exists and isn't another flag
+# Usage: require_flag_value "$1" "$#" "flag_name" || return 1
+# Returns 0 if valid, 1 if missing/invalid
+require_flag_value() {
+  local value="$1"
+  local remaining="$2"
+  local flag="$3"
+  
+  if [[ "$remaining" -eq 0 || "$value" == --* ]]; then
+    error 1 "missing_value" "$flag requires a value"
+    return 1
+  fi
+  return 0
+}
+
+# Helper: parse comma-separated tags to JSON array
+# Usage: tags_json=$(parse_tags "a,b,c")
+parse_tags() {
+  echo "$1" | tr ',' '\n' | jq -R . | jq -s .
+}
+
+# Helper: add string field to JSON payload
+# Usage: payload=$(json_add_string "$payload" "field" "$value")
+json_add_string() {
+  local json="$1"
+  local field="$2"
+  local value="$3"
+  echo "$json" | jq --arg v "$value" ". + {\"$field\": \$v}"
+}
+
+# Helper: add number/json field to JSON payload
+# Usage: payload=$(json_add_json "$payload" "field" "$json_value")
+json_add_json() {
+  local json="$1"
+  local field="$2"
+  local value="$3"
+  echo "$json" | jq --argjson v "$value" ". + {\"$field\": \$v}"
+}
+
 # If no command provided, show usage
 if [[ $# -eq 0 ]]; then
   usage
@@ -155,30 +194,18 @@ cmd_ls() {
     case "$1" in
       --collection)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--collection requires a value"
-          return 1
-        fi
-        collection="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--collection" || return 1
+        collection="$1"; shift
         ;;
       --page)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--page requires a value"
-          return 1
-        fi
-        page="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--page" || return 1
+        page="$1"; shift
         ;;
       --perpage)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--perpage requires a value"
-          return 1
-        fi
-        perpage="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--perpage" || return 1
+        perpage="$1"; shift
         ;;
       *)
         search="$1"
@@ -252,39 +279,23 @@ cmd_add() {
     case "$1" in
       --title)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--title requires a value"
-          return 1
-        fi
-        title="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--title" || return 1
+        title="$1"; shift
         ;;
       --tags)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--tags requires a value"
-          return 1
-        fi
-        tags="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--tags" || return 1
+        tags="$1"; shift
         ;;
       --collection)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--collection requires a value"
-          return 1
-        fi
-        collection="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--collection" || return 1
+        collection="$1"; shift
         ;;
       --excerpt)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--excerpt requires a value"
-          return 1
-        fi
-        excerpt="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--excerpt" || return 1
+        excerpt="$1"; shift
         ;;
       *)
         if [[ -z "$url" ]]; then
@@ -307,28 +318,14 @@ cmd_add() {
     return 1
   fi
   
-  # Build JSON payload using jq
+  # Build JSON payload
   local payload
   payload=$(jq -n --arg url "$url" '{link: $url}')
   
-  if [[ -n "$title" ]]; then
-    payload=$(echo "$payload" | jq --arg title "$title" '. + {title: $title}')
-  fi
-  
-  if [[ -n "$tags" ]]; then
-    # Convert comma-separated tags to JSON array
-    local tags_array
-    tags_array=$(echo "$tags" | tr ',' '\n' | jq -R . | jq -s .)
-    payload=$(echo "$payload" | jq --argjson tags "$tags_array" '. + {tags: $tags}')
-  fi
-  
-  if [[ -n "$collection" ]]; then
-    payload=$(echo "$payload" | jq --argjson coll "$collection" '. + {collection: {"$id": $coll}}')
-  fi
-  
-  if [[ -n "$excerpt" ]]; then
-    payload=$(echo "$payload" | jq --arg excerpt "$excerpt" '. + {excerpt: $excerpt}')
-  fi
+  [[ -n "$title" ]] && payload=$(json_add_string "$payload" "title" "$title")
+  [[ -n "$tags" ]] && payload=$(json_add_json "$payload" "tags" "$(parse_tags "$tags")")
+  [[ -n "$collection" ]] && payload=$(json_add_json "$payload" "collection" "{\"\$id\": $collection}")
+  [[ -n "$excerpt" ]] && payload=$(json_add_string "$payload" "excerpt" "$excerpt")
   
   local response
   if response=$(api_request POST "/raindrop" "$payload"); then
@@ -358,57 +355,33 @@ cmd_update() {
     case "$1" in
       --title)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--title requires a value"
-          return 1
-        fi
-        title="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--title" || return 1
+        title="$1"; shift
         ;;
       --note)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--note requires a value"
-          return 1
-        fi
-        note="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--note" || return 1
+        note="$1"; shift
         ;;
       --tags)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--tags requires a value"
-          return 1
-        fi
-        tags="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--tags" || return 1
+        tags="$1"; shift
         ;;
       --excerpt)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--excerpt requires a value"
-          return 1
-        fi
-        excerpt="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--excerpt" || return 1
+        excerpt="$1"; shift
         ;;
       --collection)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--collection requires a value"
-          return 1
-        fi
-        collection="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--collection" || return 1
+        collection="$1"; shift
         ;;
       --important)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--important requires true or false"
-          return 1
-        fi
-        important="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--important" || return 1
+        important="$1"; shift
         ;;
       *)
         if [[ -z "$id" ]]; then
@@ -433,33 +406,17 @@ cmd_update() {
   # Build JSON payload
   local payload='{}'
   
-  if [[ -n "$title" ]]; then
-    payload=$(echo "$payload" | jq --arg title "$title" '. + {title: $title}')
-  fi
-  
-  if [[ -n "$note" ]]; then
-    payload=$(echo "$payload" | jq --arg note "$note" '. + {note: $note}')
-  fi
-  
-  if [[ -n "$tags" ]]; then
-    local tags_array
-    tags_array=$(echo "$tags" | tr ',' '\n' | jq -R . | jq -s .)
-    payload=$(echo "$payload" | jq --argjson tags "$tags_array" '. + {tags: $tags}')
-  fi
-  
-  if [[ -n "$excerpt" ]]; then
-    payload=$(echo "$payload" | jq --arg excerpt "$excerpt" '. + {excerpt: $excerpt}')
-  fi
-  
-  if [[ -n "$collection" ]]; then
-    payload=$(echo "$payload" | jq --argjson coll "$collection" '. + {collection: {"$id": $coll}}')
-  fi
+  [[ -n "$title" ]] && payload=$(json_add_string "$payload" "title" "$title")
+  [[ -n "$note" ]] && payload=$(json_add_string "$payload" "note" "$note")
+  [[ -n "$tags" ]] && payload=$(json_add_json "$payload" "tags" "$(parse_tags "$tags")")
+  [[ -n "$excerpt" ]] && payload=$(json_add_string "$payload" "excerpt" "$excerpt")
+  [[ -n "$collection" ]] && payload=$(json_add_json "$payload" "collection" "{\"\$id\": $collection}")
   
   if [[ -n "$important" ]]; then
     if [[ "$important" == "true" ]]; then
-      payload=$(echo "$payload" | jq '. + {important: true}')
+      payload=$(json_add_json "$payload" "important" "true")
     elif [[ "$important" == "false" ]]; then
-      payload=$(echo "$payload" | jq '. + {important: false}')
+      payload=$(json_add_json "$payload" "important" "false")
     else
       error 1 "invalid_value" "--important must be true or false"
       return 1
@@ -521,21 +478,13 @@ cmd_tag() {
     case "$1" in
       --search)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--search requires a value"
-          return 1
-        fi
-        search="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--search" || return 1
+        search="$1"; shift
         ;;
       --collection)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--collection requires a value"
-          return 1
-        fi
-        collection="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--collection" || return 1
+        collection="$1"; shift
         ;;
       *)
         if [[ -z "$tag" ]]; then
@@ -596,21 +545,13 @@ cmd_move() {
     case "$1" in
       --search)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--search requires a value"
-          return 1
-        fi
-        search="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--search" || return 1
+        search="$1"; shift
         ;;
       --collection)
         shift
-        if [[ $# -eq 0 || "$1" == --* ]]; then
-          error 1 "missing_value" "--collection requires a value"
-          return 1
-        fi
-        source_collection="$1"
-        shift
+        require_flag_value "${1:-}" "$#" "--collection" || return 1
+        source_collection="$1"; shift
         ;;
       *)
         if [[ -z "$target_collection" ]]; then
