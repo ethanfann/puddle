@@ -2,6 +2,8 @@
 
 Bash CLI for managing [Raindrop.io](https://raindrop.io) bookmarks. Designed for AI agents to programmatically search, create, update, and organize bookmarks.
 
+![Demo](assets/demo.png)
+
 ## Requirements
 
 - **bash** 4.0+
@@ -23,15 +25,7 @@ sudo apt install jq curl
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/puddle.git
-cd puddle
-
-# Make executable (already set)
-chmod +x skills/puddle/scripts/puddle
-
-# Add to PATH (optional)
-export PATH="$PATH:$(pwd)/skills/puddle/scripts"
+npx skills add ethanfann/puddle
 ```
 
 ## Getting an API Token
