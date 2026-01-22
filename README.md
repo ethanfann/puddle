@@ -130,7 +130,7 @@ puddle ls '#tutorial type:article domain:medium.com'
 puddle ls 'notag:true'
 ```
 
-See [references/SEARCH-DSL.md](references/SEARCH-DSL.md) for complete search syntax.
+See [skills/puddle/references/search-dsl.md](skills/puddle/references/search-dsl.md) for complete search syntax.
 
 ## Output Processing
 
@@ -180,8 +180,8 @@ puddle move 12345 --search '#project-done'
 
 ## Documentation
 
-- [SKILL.md](SKILL.md) - Agent skills reference (for AI assistants)
-- [references/SEARCH-DSL.md](references/SEARCH-DSL.md) - Complete search syntax reference
+- [skills/puddle/SKILL.md](skills/puddle/SKILL.md) - Agent skills reference (for AI assistants)
+- [skills/puddle/references/search-dsl.md](skills/puddle/references/search-dsl.md) - Complete search syntax reference
 
 ## License
 

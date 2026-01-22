@@ -114,7 +114,7 @@ puddle collections | jq '.[] | {id: ._id, title}'
 
 Combine with spaces: `#react type:article created:>2024-01-01`
 
-For complex queries, see [references/SEARCH-DSL.md](references/SEARCH-DSL.md).
+For complex queries, see [references/search-dsl.md](references/search-dsl.md).
 
 ## Output Processing with jq
 
